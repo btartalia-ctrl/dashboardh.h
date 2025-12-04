@@ -1,0 +1,2832 @@
+<!doctype html>
+
+<html lang="pt-BR">
+
+&nbsp;<head>
+
+&nbsp; <meta charset="UTF-8">
+
+&nbsp; <title>Dashboard Hora a Hora</title>
+
+&nbsp; <script src="https://cdn.tailwindcss.com"></script>
+
+&nbsp; <script src="https://sdk.canva.com/\_sdk/element\_sdk.js"></script>
+
+&nbsp; <script src="https://sdk.canva.com/\_sdk/data\_sdk.js"></script>
+
+&nbsp; <style>
+
+&nbsp;   body {
+
+&nbsp;     box-sizing: border-box;
+
+&nbsp;   }
+
+&nbsp;   html, body {
+
+&nbsp;     height: 100%;
+
+&nbsp;     width: 100%;
+
+&nbsp;     margin: 0;
+
+&nbsp;     padding: 0;
+
+&nbsp;   }
+
+&nbsp;   .chart-tooltip {
+
+&nbsp;     pointer-events: none;
+
+&nbsp;   }
+
+&nbsp;   .table-scroll::-webkit-scrollbar {
+
+&nbsp;     width: 8px;
+
+&nbsp;   }
+
+&nbsp;   .table-scroll::-webkit-scrollbar-track {
+
+&nbsp;     background: transparent;
+
+&nbsp;   }
+
+&nbsp;   .table-scroll::-webkit-scrollbar-thumb {
+
+&nbsp;     background-color: rgba(0, 0, 0, 0.2);
+
+&nbsp;     border-radius: 9999px;
+
+&nbsp;   }
+
+&nbsp;   .focus-outline:focus-visible {
+
+&nbsp;     outline: 2px solid #0f766e;
+
+&nbsp;     outline-offset: 2px;
+
+&nbsp;   }
+
+&nbsp; </style>
+
+&nbsp; <style>@view-transition { navigation: auto; }</style>
+
+&nbsp; <script src="/\_sdk/data\_sdk.js" type="text/javascript"></script>
+
+&nbsp; <script src="/\_sdk/element\_sdk.js" type="text/javascript"></script>
+
+&nbsp;</head>
+
+&nbsp;<body class="w-full h-full">
+
+&nbsp; <div id="app-root" class="w-full h-full bg-\[#f5f7fb] flex flex-col">
+
+&nbsp;  <header class="w-full px-6 pt-4 pb-3">
+
+&nbsp;   <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+
+&nbsp;    <div class="flex flex-col gap-1">
+
+&nbsp;     <h1 id="main-title" class="text-2xl font-semibold text-slate-800 tracking-tight">HORA x HORA</h1>
+
+&nbsp;     <p id="subtitle-text" class="text-sm text-slate-500">Análise de capacidade, faturado e perdas por hora</p>
+
+&nbsp;    </div>
+
+&nbsp;    <div class="bg-white rounded-lg shadow-sm px-3 py-2 border border-slate-200 flex items-center gap-3">
+
+&nbsp;     <div>
+
+&nbsp;      <p class="text-\[10px] text-slate-500 uppercase tracking-wide mb-0.5">Última atualização</p>
+
+&nbsp;      <p id="last-update-time" class="text-xs font-medium text-slate-700">--</p>
+
+&nbsp;     </div><button id="reset-data-btn" type="button" class="focus-outline px-2 py-1 rounded-md bg-rose-50 border border-rose-200 text-\[11px] font-medium text-rose-700 hover:bg-rose-100 transition-colors"> 🔄 Resetar </button>
+
+&nbsp;    </div>
+
+&nbsp;   </div>
+
+&nbsp;  </header>
+
+&nbsp;  <main class="w-full flex-1 overflow-auto">
+
+&nbsp;   <div class="max-w-6xl mx-auto px-6 pb-6 flex flex-col gap-4">
+
+&nbsp;    <section aria-label="Filtros" class="w-full">
+
+&nbsp;     <form id="filters-form" class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-wrap gap-4 items-end">
+
+&nbsp;      <div class="flex flex-col"><label for="start-hour" class="text-xs font-medium text-slate-600 mb-1">Hora inicial</label> <select id="start-hour" name="start-hour" class="focus-outline border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 bg-white"> </select>
+
+&nbsp;      </div>
+
+&nbsp;      <div class="flex flex-col"><label for="end-hour" class="text-xs font-medium text-slate-600 mb-1">Hora final</label> <select id="end-hour" name="end-hour" class="focus-outline border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 bg-white"> </select>
+
+&nbsp;      </div>
+
+&nbsp;      <div class="flex flex-col"><label for="loss-type-filter" class="text-xs font-medium text-slate-600 mb-1">Tipo de perda</label> <select id="loss-type-filter" name="loss-type-filter" class="focus-outline border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-slate-700 bg-white"> <option value="ALL">Todos</option> <option value="Transporte">Transporte</option> <option value="CD">CD</option> <option value="Sem perda">Sem perda</option> </select>
+
+&nbsp;      </div>
+
+&nbsp;      <div class="flex-1"></div><button id="distribute-btn" type="button" class="focus-outline inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm font-medium"> <span aria-hidden="true">📊</span> <span>Distribuir Faturado</span> </button> <button id="edit-data-btn" type="button" class="focus-outline inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"> <span aria-hidden="true">📝</span> <span>Editar Dados</span> </button>
+
+&nbsp;     </form>
+
+&nbsp;    </section>
+
+&nbsp;    <section aria-label="Indicadores de produção" class="w-full">
+
+&nbsp;     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+&nbsp;      <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col gap-1">
+
+&nbsp;       <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide">Capacidade do dia</h2>
+
+&nbsp;       <p id="kpi-total-capacity" class="text-xl font-semibold text-slate-800">0</p>
+
+&nbsp;       <p class="text-\[11px] text-slate-400">Soma da capacidade no intervalo selecionado</p>
+
+&nbsp;      </article>
+
+&nbsp;      <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col gap-1">
+
+&nbsp;       <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total faturado</h2>
+
+&nbsp;       <p id="kpi-total-billed" class="text-xl font-semibold text-emerald-600">0</p>
+
+&nbsp;       <p class="text-\[11px] text-slate-400">Soma do faturado no intervalo selecionado</p>
+
+&nbsp;      </article>
+
+&nbsp;      <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col gap-1">
+
+&nbsp;       <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total de perdas</h2>
+
+&nbsp;       <p id="kpi-total-loss" class="text-xl font-semibold text-rose-600">0</p>
+
+&nbsp;       <p class="text-\[11px] text-slate-400">Somatório das perdas no intervalo</p>
+
+&nbsp;      </article>
+
+&nbsp;      <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col gap-1">
+
+&nbsp;       <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide">% horas sem perda</h2>
+
+&nbsp;       <p id="kpi-no-loss-percent" class="text-xl font-semibold text-emerald-600">0%</p>
+
+&nbsp;       <p class="text-\[11px] text-slate-400">Horas em que não houve perda</p>
+
+&nbsp;      </article>
+
+&nbsp;     </div>
+
+&nbsp;    </section>
+
+&nbsp;    <section aria-label="Análise de Perda - Hora Atual" class="w-full">
+
+&nbsp;     <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col">
+
+&nbsp;      <div class="flex items-center justify-between mb-3">
+
+&nbsp;       <h2 class="text-sm font-semibold text-slate-700">🕐 Análise de Perda - Hora Atual</h2><span id="current-time-display" class="text-\[11px] text-slate-400">--:--</span>
+
+&nbsp;      </div>
+
+&nbsp;      <div id="current-hour-card-container" class="flex justify-center">
+
+&nbsp;      </div>
+
+&nbsp;     </article>
+
+&nbsp;    </section>
+
+&nbsp;    <section aria-label="Gráficos" class="w-full grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+&nbsp;     <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col">
+
+&nbsp;      <h2 class="text-sm font-semibold text-slate-700 mb-2">Capacidade x Faturado (por hora)</h2>
+
+&nbsp;      <div class="relative w-full" style="height: 320px;">
+
+&nbsp;       <canvas id="line-chart" class="w-full h-full"></canvas>
+
+&nbsp;       <div id="line-tooltip" class="chart-tooltip hidden absolute z-10 bg-white border border-slate-200 rounded-md px-3 py-2 shadow-md text-xs text-slate-700"></div>
+
+&nbsp;      </div>
+
+&nbsp;     </article>
+
+&nbsp;     <article class="bg-white rounded-xl shadow-sm px-4 py-3 flex flex-col">
+
+&nbsp;      <h2 class="text-sm font-semibold text-slate-700 mb-2">Perdas por tipo (por hora)</h2>
+
+&nbsp;      <div class="relative w-full" style="height: 320px;">
+
+&nbsp;       <canvas id="bar-chart" class="w-full h-full"></canvas>
+
+&nbsp;       <div id="bar-tooltip" class="chart-tooltip hidden absolute z-10 bg-white border border-slate-200 rounded-md px-3 py-2 shadow-md text-xs text-slate-700"></div>
+
+&nbsp;      </div>
+
+&nbsp;      <div class="mt-2 flex flex-wrap gap-3 text-\[11px] text-slate-500"><span class="inline-flex items-center gap-1"> <span class="w-3 h-3 rounded-sm inline-block" style="background-color:#9ca3af;"></span> Transporte </span> <span class="inline-flex items-center gap-1"> <span class="w-3 h-3 rounded-sm inline-block" style="background-color:#7c3aed;"></span> CD </span> <span class="inline-flex items-center gap-1"> <span class="w-3 h-3 rounded-sm inline-block" style="background-color:#22c55e;"></span> Sem perda </span>
+
+&nbsp;      </div>
+
+&nbsp;     </article>
+
+&nbsp;    </section>
+
+&nbsp;    <section aria-label="Tabela de dados" class="w-full">
+
+&nbsp;     <article class="bg-white rounded-xl shadow-sm px-4 pt-3 pb-2 flex flex-col" style="height: 280px;">
+
+&nbsp;      <div class="flex items-center justify-between mb-2">
+
+&nbsp;       <h2 class="text-sm font-semibold text-slate-700">Dados hora a hora</h2><span class="text-\[11px] text-slate-400" id="table-count-label">0 linhas</span>
+
+&nbsp;      </div>
+
+&nbsp;      <div class="flex-1 overflow-auto table-scroll">
+
+&nbsp;       <table class="min-w-full text-xs text-left">
+
+&nbsp;        <thead class="sticky top-0 bg-slate-50 z-10">
+
+&nbsp;         <tr class="text-\[11px] text-slate-500 uppercase tracking-wide">
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium">Janela</th>
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium">Hora</th>
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium text-right">Capacidade</th>
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium text-right">Faturado</th>
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium text-right">Perda</th>
+
+&nbsp;          <th scope="col" class="px-2 py-2 font-medium">Tipo de perda</th>
+
+&nbsp;         </tr>
+
+&nbsp;        </thead>
+
+&nbsp;        <tbody id="data-table-body" class="divide-y divide-slate-100">
+
+&nbsp;        </tbody>
+
+&nbsp;       </table>
+
+&nbsp;      </div>
+
+&nbsp;     </article>
+
+&nbsp;    </section>
+
+&nbsp;   </div>
+
+&nbsp;  </main><!-- Modal de Edição -->
+
+&nbsp;  <div id="edit-modal-backdrop" class="fixed inset-0 bg-black/40 flex items-center justify-center z-20 hidden" style="backdrop-filter: none;">
+
+&nbsp;   <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" class="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-\[90%] flex flex-col">
+
+&nbsp;    <header class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+
+&nbsp;     <div>
+
+&nbsp;      <h2 id="edit-modal-title" class="text-sm font-semibold text-slate-800">Editar dados por hora</h2>
+
+&nbsp;      <p class="text-\[11px] text-slate-500">Altere capacidade, faturado, perda e tipo de perda. As mudanças afetam todo o dashboard.</p>
+
+&nbsp;     </div><button id="close-modal-btn" type="button" class="focus-outline text-slate-400 hover:text-slate-600 text-lg leading-none"> × </button>
+
+&nbsp;    </header>
+
+&nbsp;    <div class="flex-1 overflow-auto px-5 py-3 table-scroll">
+
+&nbsp;     <table class="min-w-full text-xs text-left">
+
+&nbsp;      <thead class="sticky top-0 bg-slate-50 z-10">
+
+&nbsp;       <tr class="text-\[11px] text-slate-500 uppercase tracking-wide">
+
+&nbsp;        <th scope="col" class="px-2 py-2 font-medium">Hora</th>
+
+&nbsp;        <th scope="col" class="px-2 py-2 font-medium text-right">Capacidade</th>
+
+&nbsp;        <th scope="col" class="px-2 py-2 font-medium text-right">Faturado</th>
+
+&nbsp;        <th scope="col" class="px-2 py-2 font-medium text-right">Perda</th>
+
+&nbsp;        <th scope="col" class="px-2 py-2 font-medium">Tipo de perda</th>
+
+&nbsp;       </tr>
+
+&nbsp;      </thead>
+
+&nbsp;      <tbody id="edit-table-body" class="divide-y divide-slate-100">
+
+&nbsp;      </tbody>
+
+&nbsp;     </table>
+
+&nbsp;    </div>
+
+&nbsp;    <footer class="px-5 py-3 border-t border-slate-100 flex items-center justify-between"><span id="modal-status" class="text-\[11px] text-slate-400"></span>
+
+&nbsp;     <div class="flex gap-2"><button id="cancel-modal-btn" type="button" class="focus-outline px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50"> Cancelar </button> <button id="save-modal-btn" type="button" class="focus-outline px-4 py-1.5 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"> Salvar alterações </button>
+
+&nbsp;     </div>
+
+&nbsp;    </footer>
+
+&nbsp;   </div>
+
+&nbsp;  </div><!-- Modal de Distribuição -->
+
+&nbsp;  <div id="distribution-modal-backdrop" class="fixed inset-0 bg-black/40 flex items-center justify-center z-30 hidden">
+
+&nbsp;   <div role="dialog" aria-modal="true" aria-labelledby="distribution-modal-title" class="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-\[90%] flex flex-col">
+
+&nbsp;    <header class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+
+&nbsp;     <div>
+
+&nbsp;      <h2 id="distribution-modal-title" class="text-sm font-semibold text-slate-800">📊 Distribuição de Faturado</h2>
+
+&nbsp;      <p class="text-\[11px] text-slate-500">Alocação automática do faturado respeitando a capacidade de cada horário</p>
+
+&nbsp;     </div><button id="close-distribution-btn" type="button" class="focus-outline text-slate-400 hover:text-slate-600 text-lg leading-none"> × </button>
+
+&nbsp;    </header>
+
+&nbsp;    <div class="flex-1 overflow-auto px-5 py-4 table-scroll">
+
+&nbsp;     <div id="distribution-content"></div>
+
+&nbsp;    </div>
+
+&nbsp;    <footer class="px-5 py-3 border-t border-slate-100 flex items-center justify-end gap-2"><button id="cancel-distribution-btn" type="button" class="focus-outline px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50"> Cancelar </button> <button id="apply-distribution-btn" type="button" class="focus-outline px-4 py-1.5 rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"> Aplicar Distribuição </button>
+
+&nbsp;    </footer>
+
+&nbsp;   </div>
+
+&nbsp;  </div>
+
+&nbsp; </div>
+
+&nbsp; <script>
+
+&nbsp;   const COLORS = {
+
+&nbsp;     BACKGROUND: '#f5f7fb',
+
+&nbsp;     SURFACE: '#ffffff',
+
+&nbsp;     TEXT: '#0f172a',
+
+&nbsp;     PRIMARY\_ACTION: '#10b981',
+
+&nbsp;     SECONDARY\_ACTION: '#64748b'
+
+&nbsp;   };
+
+
+
+&nbsp;   const defaultConfig = {
+
+&nbsp;     main\_title: "HORA x HORA",
+
+&nbsp;     subtitle: "Análise de capacidade, faturado e perdas por hora",
+
+&nbsp;     background\_color: COLORS.BACKGROUND,
+
+&nbsp;     surface\_color: COLORS.SURFACE,
+
+&nbsp;     text\_color: COLORS.TEXT,
+
+&nbsp;     primary\_action\_color: COLORS.PRIMARY\_ACTION,
+
+&nbsp;     secondary\_action\_color: COLORS.SECONDARY\_ACTION,
+
+&nbsp;     font\_family: "Inter",
+
+&nbsp;     font\_size: 14
+
+&nbsp;   };
+
+
+
+&nbsp;   const baseRawData = \[
+
+&nbsp;     { window: "00:00-01:00", hourLabel: "00:00", capacity: 0 },
+
+&nbsp;     { window: "01:00-02:00", hourLabel: "01:00", capacity: 0 },
+
+&nbsp;     { window: "02:00-03:00", hourLabel: "02:00", capacity: 3000 },
+
+&nbsp;     { window: "03:00-04:00", hourLabel: "03:00", capacity: 4500 },
+
+&nbsp;     { window: "04:00-05:00", hourLabel: "04:00", capacity: 4500 },
+
+&nbsp;     { window: "05:00-06:00", hourLabel: "05:00", capacity: 4500 },
+
+&nbsp;     { window: "06:00-07:00", hourLabel: "06:00", capacity: 0 },
+
+&nbsp;     { window: "07:00-08:00", hourLabel: "07:00", capacity: 3000 },
+
+&nbsp;     { window: "08:00-09:00", hourLabel: "08:00", capacity: 3500 },
+
+&nbsp;     { window: "09:00-10:00", hourLabel: "09:00", capacity: 3500 },
+
+&nbsp;     { window: "10:00-11:00", hourLabel: "10:00", capacity: 3500 },
+
+&nbsp;     { window: "11:00-12:00", hourLabel: "11:00", capacity: 3000 },
+
+&nbsp;     { window: "12:00-13:00", hourLabel: "12:00", capacity: 3000 },
+
+&nbsp;     { window: "13:00-14:00", hourLabel: "13:00", capacity: 5000 },
+
+&nbsp;     { window: "14:00-15:00", hourLabel: "14:00", capacity: 5000 },
+
+&nbsp;     { window: "15:00-16:00", hourLabel: "15:00", capacity: 6000 },
+
+&nbsp;     { window: "16:00-17:00", hourLabel: "16:00", capacity: 6500 },
+
+&nbsp;     { window: "17:00-18:00", hourLabel: "17:00", capacity: 6500 },
+
+&nbsp;     { window: "18:00-19:00", hourLabel: "18:00", capacity: 5000 },
+
+&nbsp;     { window: "19:00-20:00", hourLabel: "19:00", capacity: 5000 },
+
+&nbsp;     { window: "20:00-21:00", hourLabel: "20:00", capacity: 5000 },
+
+&nbsp;     { window: "21:00-22:00", hourLabel: "21:00", capacity: 5000 },
+
+&nbsp;     { window: "22:00-23:00", hourLabel: "22:00", capacity: 2000 },
+
+&nbsp;     { window: "23:00-00:00", hourLabel: "23:00", capacity: 0 }
+
+&nbsp;   ];
+
+
+
+&nbsp;   let workingData = baseRawData.map((row, idx) => ({
+
+&nbsp;     id: idx,
+
+&nbsp;     window: row.window,
+
+&nbsp;     hourLabel: row.hourLabel,
+
+&nbsp;     capacity: row.capacity,
+
+&nbsp;     billed: 0,
+
+&nbsp;     loss: 0,
+
+&nbsp;     lossType: "Sem perda"
+
+&nbsp;   }));
+
+
+
+&nbsp;   const filterState = {
+
+&nbsp;     startHourIndex: 0,
+
+&nbsp;     endHourIndex: 23,
+
+&nbsp;     lossType: "ALL"
+
+&nbsp;   };
+
+
+
+&nbsp;   let dataSdkInitialized = false;
+
+&nbsp;   let distributionResult = null;
+
+
+
+&nbsp;   function formatNumber(num) {
+
+&nbsp;     return num.toLocaleString('pt-BR');
+
+&nbsp;   }
+
+
+
+&nbsp;   function getCurrentHourIndex() {
+
+&nbsp;     const now = new Date();
+
+&nbsp;     const currentHour = now.getHours();
+
+&nbsp;     return currentHour;
+
+&nbsp;   }
+
+
+
+&nbsp;   function updateCurrentTimeDisplay() {
+
+&nbsp;     const now = new Date();
+
+&nbsp;     const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+&nbsp;     document.getElementById('current-time-display').textContent = timeStr;
+
+&nbsp;   }
+
+
+
+&nbsp;   function renderCurrentHourCard() {
+
+&nbsp;     const container = document.getElementById('current-hour-card-container');
+
+&nbsp;     container.innerHTML = "";
+
+&nbsp;     
+
+&nbsp;     const currentHourIndex = getCurrentHourIndex();
+
+&nbsp;     
+
+&nbsp;     // Calcula a distribuição automática
+
+&nbsp;     const distribution = calculateDistribution();
+
+&nbsp;     const currentDistRow = distribution.distribution\[currentHourIndex];
+
+&nbsp;     
+
+&nbsp;     if (!currentDistRow) {
+
+&nbsp;       container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Horário não encontrado</p>';
+
+&nbsp;       return;
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     const capacity = currentDistRow.capacity;
+
+&nbsp;     const billedAllocated = currentDistRow.allocated;
+
+&nbsp;     const receivedBilled = currentDistRow.receivedBilled;
+
+&nbsp;     const ownBilled = currentDistRow.ownBilled;
+
+&nbsp;     const delta = currentDistRow.delta;
+
+&nbsp;     
+
+&nbsp;     const hasLoss = billedAllocated < capacity;
+
+&nbsp;     const lossAmount = hasLoss ? capacity - billedAllocated : 0;
+
+&nbsp;     const receivedCarryOver = receivedBilled > ownBilled;
+
+&nbsp;     
+
+&nbsp;     const card = document.createElement('div');
+
+&nbsp;     
+
+&nbsp;     let bgColor, borderColor, statusIcon, statusText, statusColor;
+
+&nbsp;     
+
+&nbsp;     if (hasLoss) {
+
+&nbsp;       bgColor = 'bg-rose-50';
+
+&nbsp;       borderColor = 'border-rose-300';
+
+&nbsp;       statusIcon = '❌';
+
+&nbsp;       statusText = 'Sim';
+
+&nbsp;       statusColor = 'text-rose-700';
+
+&nbsp;     } else {
+
+&nbsp;       bgColor = 'bg-emerald-50';
+
+&nbsp;       borderColor = 'border-emerald-300';
+
+&nbsp;       statusIcon = '✅';
+
+&nbsp;       statusText = 'Não';
+
+&nbsp;       statusColor = 'text-emerald-700';
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     card.className = `${bgColor} border-2 ${borderColor} rounded-xl px-6 py-5 flex flex-col gap-3 max-w-md w-full shadow-lg`;
+
+&nbsp;     card.innerHTML = `
+
+&nbsp;       <div class="flex items-center justify-between mb-2">
+
+&nbsp;         <span class="text-3xl font-bold text-slate-800">${currentDistRow.hour}</span>
+
+&nbsp;         <span class="text-4xl" aria-hidden="true">${statusIcon}</span>
+
+&nbsp;       </div>
+
+&nbsp;       
+
+&nbsp;       <div class="flex flex-col gap-2 text-sm text-slate-700">
+
+&nbsp;         <div class="flex justify-between items-center py-2 border-b border-slate-200">
+
+&nbsp;           <span class="text-slate-600 font-medium">Capacidade:</span>
+
+&nbsp;           <span class="font-bold text-lg">${formatNumber(capacity)}</span>
+
+&nbsp;         </div>
+
+&nbsp;         ${receivedCarryOver ? `
+
+&nbsp;         <div class="flex justify-between items-center py-2 border-b border-slate-200">
+
+&nbsp;           <span class="text-slate-600 font-medium">Faturado Recebido:</span>
+
+&nbsp;           <span class="font-bold text-lg text-amber-700">${formatNumber(receivedBilled)} <span class="text-xs">↓</span></span>
+
+&nbsp;         </div>
+
+&nbsp;         ` : ''}
+
+&nbsp;         <div class="flex justify-between items-center py-2 border-b border-slate-200">
+
+&nbsp;           <span class="text-slate-600 font-medium">Faturado Alocado:</span>
+
+&nbsp;           <span class="font-bold text-lg ${billedAllocated > 0 ? 'text-emerald-700' : ''}">${formatNumber(billedAllocated)}</span>
+
+&nbsp;         </div>
+
+&nbsp;         ${hasLoss ? `
+
+&nbsp;         <div class="flex justify-between items-center py-2 border-b border-slate-200">
+
+&nbsp;           <span class="text-slate-600 font-medium">Perda:</span>
+
+&nbsp;           <span class="font-bold text-lg text-rose-600">${formatNumber(lossAmount)}</span>
+
+&nbsp;         </div>
+
+&nbsp;         ` : ''}
+
+&nbsp;         ${delta > 0 ? `
+
+&nbsp;         <div class="flex justify-between items-center py-2 border-b border-slate-200">
+
+&nbsp;           <span class="text-slate-600 font-medium">Excedente (p/ frente):</span>
+
+&nbsp;           <span class="font-bold text-lg text-rose-600">${formatNumber(delta)} <span class="text-xs">→</span></span>
+
+&nbsp;         </div>
+
+&nbsp;         ` : ''}
+
+&nbsp;       </div>
+
+&nbsp;       
+
+&nbsp;       <div class="mt-2 pt-3 border-t-2 border-slate-300 flex justify-between items-center">
+
+&nbsp;         <span class="text-sm text-slate-600 font-semibold">Status de Perda:</span>
+
+&nbsp;         <span class="text-xl font-bold ${statusColor}">${statusText}</span>
+
+&nbsp;       </div>
+
+&nbsp;     `;
+
+&nbsp;     
+
+&nbsp;     container.appendChild(card);
+
+&nbsp;   }
+
+
+
+&nbsp;   function initHourSelects() {
+
+&nbsp;     const startSel = document.getElementById('start-hour');
+
+&nbsp;     const endSel = document.getElementById('end-hour');
+
+&nbsp;     startSel.innerHTML = "";
+
+&nbsp;     endSel.innerHTML = "";
+
+&nbsp;     workingData.forEach((row, idx) => {
+
+&nbsp;       const opt1 = document.createElement('option');
+
+&nbsp;       opt1.value = String(idx);
+
+&nbsp;       opt1.textContent = row.hourLabel;
+
+&nbsp;       if (idx === filterState.startHourIndex) opt1.selected = true;
+
+&nbsp;       startSel.appendChild(opt1);
+
+
+
+&nbsp;       const opt2 = document.createElement('option');
+
+&nbsp;       opt2.value = String(idx);
+
+&nbsp;       opt2.textContent = row.hourLabel;
+
+&nbsp;       if (idx === filterState.endHourIndex) opt2.selected = true;
+
+&nbsp;       endSel.appendChild(opt2);
+
+&nbsp;     });
+
+&nbsp;   }
+
+
+
+&nbsp;   function getFilteredData() {
+
+&nbsp;     return workingData.filter((row, idx) => {
+
+&nbsp;       const withinRange = idx >= filterState.startHourIndex \&\& idx <= filterState.endHourIndex;
+
+&nbsp;       const typeMatch = filterState.lossType === "ALL" || row.lossType === filterState.lossType;
+
+&nbsp;       return withinRange \&\& typeMatch;
+
+&nbsp;     });
+
+&nbsp;   }
+
+
+
+&nbsp;   function updateKpis() {
+
+&nbsp;     const filtered = getFilteredData();
+
+&nbsp;     const totalCapacity = filtered.reduce((sum, r) => sum + (Number(r.capacity) || 0), 0);
+
+&nbsp;     const totalBilled = filtered.reduce((sum, r) => sum + (Number(r.billed) || 0), 0);
+
+&nbsp;     const totalLoss = filtered.reduce((sum, r) => sum + (Number(r.loss) || 0), 0);
+
+&nbsp;     const hoursCount = filtered.length;
+
+&nbsp;     const noLossHours = filtered.filter(r => (Number(r.loss) || 0) === 0).length;
+
+&nbsp;     const percentNoLoss = hoursCount === 0 ? 0 : Math.round((noLossHours / hoursCount) \* 100);
+
+
+
+&nbsp;     document.getElementById('kpi-total-capacity').textContent = formatNumber(totalCapacity);
+
+&nbsp;     document.getElementById('kpi-total-billed').textContent = formatNumber(totalBilled);
+
+&nbsp;     document.getElementById('kpi-total-loss').textContent = formatNumber(totalLoss);
+
+&nbsp;     document.getElementById('kpi-no-loss-percent').textContent = percentNoLoss + "%";
+
+&nbsp;   }
+
+
+
+&nbsp;   function renderTable() {
+
+&nbsp;     const tbody = document.getElementById('data-table-body');
+
+&nbsp;     tbody.innerHTML = "";
+
+&nbsp;     const filtered = getFilteredData();
+
+&nbsp;     filtered.forEach(row => {
+
+&nbsp;       const tr = document.createElement('tr');
+
+&nbsp;       let bgClass = "";
+
+&nbsp;       if (row.lossType === "Transporte") {
+
+&nbsp;         bgClass = "bg-slate-100";
+
+&nbsp;       } else if (row.lossType === "CD") {
+
+&nbsp;         bgClass = "bg-violet-50";
+
+&nbsp;       } else if (row.lossType === "Sem perda") {
+
+&nbsp;         bgClass = "bg-emerald-50/40";
+
+&nbsp;       }
+
+&nbsp;       tr.className = bgClass + " hover:bg-slate-100/70 transition-colors";
+
+
+
+&nbsp;       tr.innerHTML = `
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-slate-700">${row.window}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-slate-700">${row.hourLabel}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right text-slate-700">${formatNumber(Number(row.capacity || 0))}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right text-slate-700">${formatNumber(Number(row.billed || 0))}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right text-slate-700">${formatNumber(Number(row.loss || 0))}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-slate-700">${row.lossType}</td>
+
+&nbsp;       `;
+
+&nbsp;       tbody.appendChild(tr);
+
+&nbsp;     });
+
+&nbsp;     document.getElementById('table-count-label').textContent = filtered.length + " linhas";
+
+&nbsp;   }
+
+
+
+&nbsp;   function createLineChart() {
+
+&nbsp;     const canvas = document.getElementById('line-chart');
+
+&nbsp;     const ctx = canvas.getContext('2d');
+
+&nbsp;     const dpr = window.devicePixelRatio || 1;
+
+&nbsp;     const width = canvas.clientWidth;
+
+&nbsp;     const height = canvas.clientHeight;
+
+&nbsp;     canvas.width = width \* dpr;
+
+&nbsp;     canvas.height = height \* dpr;
+
+&nbsp;     ctx.scale(dpr, dpr);
+
+
+
+&nbsp;     const filtered = getFilteredData();
+
+&nbsp;     const labels = filtered.map(r => r.hourLabel);
+
+&nbsp;     const capacityValues = filtered.map(r => Number(r.capacity || 0));
+
+&nbsp;     const billedValues = filtered.map(r => Number(r.billed || 0));
+
+&nbsp;     const maxVal = Math.max(1, ...capacityValues, ...billedValues);
+
+&nbsp;     const paddingLeft = 36;
+
+&nbsp;     const paddingRight = 18;
+
+&nbsp;     const paddingTop = 20;
+
+&nbsp;     const paddingBottom = 28;
+
+&nbsp;     const plotWidth = width - paddingLeft - paddingRight;
+
+&nbsp;     const plotHeight = height - paddingTop - paddingBottom;
+
+
+
+&nbsp;     ctx.clearRect(0, 0, width, height);
+
+&nbsp;     ctx.fillStyle = "#ffffff";
+
+&nbsp;     ctx.fillRect(0, 0, width, height);
+
+
+
+&nbsp;     ctx.strokeStyle = "#e5e7eb";
+
+&nbsp;     ctx.lineWidth = 1;
+
+&nbsp;     ctx.beginPath();
+
+&nbsp;     ctx.moveTo(paddingLeft, paddingTop);
+
+&nbsp;     ctx.lineTo(paddingLeft, height - paddingBottom);
+
+&nbsp;     ctx.lineTo(width - paddingRight, height - paddingBottom);
+
+&nbsp;     ctx.stroke();
+
+
+
+&nbsp;     ctx.fillStyle = "#6b7280";
+
+&nbsp;     ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+&nbsp;     const steps = 4;
+
+&nbsp;     for (let i = 0; i <= steps; i++) {
+
+&nbsp;       const value = (maxVal / steps) \* i;
+
+&nbsp;       const y = (height - paddingBottom) - (plotHeight \* (value / maxVal));
+
+&nbsp;       ctx.strokeStyle = "#f3f4f6";
+
+&nbsp;       ctx.beginPath();
+
+&nbsp;       ctx.moveTo(paddingLeft, y);
+
+&nbsp;       ctx.lineTo(width - paddingRight, y);
+
+&nbsp;       ctx.stroke();
+
+
+
+&nbsp;       ctx.fillStyle = "#9ca3af";
+
+&nbsp;       ctx.textAlign = "right";
+
+&nbsp;       ctx.textBaseline = "middle";
+
+&nbsp;       ctx.fillText(formatNumber(Math.round(value)), paddingLeft - 4, y);
+
+&nbsp;     }
+
+
+
+&nbsp;     ctx.fillStyle = "#9ca3af";
+
+&nbsp;     ctx.textAlign = "center";
+
+&nbsp;     ctx.textBaseline = "top";
+
+&nbsp;     const count = labels.length;
+
+&nbsp;     if (count > 0) {
+
+&nbsp;       for (let i = 0; i < count; i++) {
+
+&nbsp;         const x = paddingLeft + (plotWidth \* (count === 1 ? 0.5 : (i / (count - 1))));
+
+&nbsp;         if (count <= 8 || i % Math.ceil(count / 8) === 0) {
+
+&nbsp;           ctx.fillText(labels\[i], x, height - paddingBottom + 6);
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;     }
+
+
+
+&nbsp;     function pointForIndex(idx, value) {
+
+&nbsp;       const x = paddingLeft + (plotWidth \* (count === 1 ? 0.5 : (idx / (count - 1))));
+
+&nbsp;       const y = (height - paddingBottom) - (plotHeight \* (value / maxVal));
+
+&nbsp;       return { x, y };
+
+&nbsp;     }
+
+
+
+&nbsp;     ctx.lineWidth = 2;
+
+
+
+&nbsp;     ctx.strokeStyle = "#3b82f6";
+
+&nbsp;     ctx.beginPath();
+
+&nbsp;     capacityValues.forEach((val, idx) => {
+
+&nbsp;       const { x, y } = pointForIndex(idx, val);
+
+&nbsp;       if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+
+&nbsp;     });
+
+&nbsp;     ctx.stroke();
+
+
+
+&nbsp;     ctx.strokeStyle = "#22c55e";
+
+&nbsp;     ctx.beginPath();
+
+&nbsp;     billedValues.forEach((val, idx) => {
+
+&nbsp;       const { x, y } = pointForIndex(idx, val);
+
+&nbsp;       if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+
+&nbsp;     });
+
+&nbsp;     ctx.stroke();
+
+
+
+&nbsp;     for (let i = 0; i < count; i++) {
+
+&nbsp;       const capPoint = pointForIndex(i, capacityValues\[i]);
+
+&nbsp;       const billPoint = pointForIndex(i, billedValues\[i]);
+
+
+
+&nbsp;       ctx.fillStyle = "#3b82f6";
+
+&nbsp;       ctx.beginPath();
+
+&nbsp;       ctx.arc(capPoint.x, capPoint.y, 3, 0, Math.PI \* 2);
+
+&nbsp;       ctx.fill();
+
+
+
+&nbsp;       ctx.fillStyle = "#22c55e";
+
+&nbsp;       ctx.beginPath();
+
+&nbsp;       ctx.arc(billPoint.x, billPoint.y, 3, 0, Math.PI \* 2);
+
+&nbsp;       ctx.fill();
+
+&nbsp;     }
+
+
+
+&nbsp;     const hitBoxes = filtered.map((row, idx) => {
+
+&nbsp;       const x = paddingLeft + (plotWidth \* (count === 1 ? 0.5 : (idx / (count - 1))));
+
+&nbsp;       return { x, row, idx };
+
+&nbsp;     });
+
+
+
+&nbsp;     const tooltipEl = document.getElementById('line-tooltip');
+
+&nbsp;     canvas.onmousemove = (e) => {
+
+&nbsp;       const rect = canvas.getBoundingClientRect();
+
+&nbsp;       const x = (e.clientX - rect.left);
+
+&nbsp;       const y = (e.clientY - rect.top);
+
+&nbsp;       if (y < paddingTop || y > height - paddingBottom) {
+
+&nbsp;         tooltipEl.classList.add('hidden');
+
+&nbsp;         return;
+
+&nbsp;       }
+
+&nbsp;       let nearest = null;
+
+&nbsp;       let minDist = Infinity;
+
+&nbsp;       hitBoxes.forEach(h => {
+
+&nbsp;         const dx = h.x - x;
+
+&nbsp;         const d = Math.abs(dx);
+
+&nbsp;         if (d < minDist) {
+
+&nbsp;           minDist = d;
+
+&nbsp;           nearest = h;
+
+&nbsp;         }
+
+&nbsp;       });
+
+&nbsp;       if (!nearest || minDist > 25) {
+
+&nbsp;         tooltipEl.classList.add('hidden');
+
+&nbsp;         return;
+
+&nbsp;       }
+
+&nbsp;       const r = nearest.row;
+
+&nbsp;       const lossVal = (Number(r.capacity || 0) - Number(r.billed || 0)) || 0;
+
+&nbsp;       tooltipEl.innerHTML = `
+
+&nbsp;         <div class="font-semibold text-\[11px] mb-1">${r.hourLabel}</div>
+
+&nbsp;         <div>Capacidade: <span class="font-medium text-slate-900">${formatNumber(Number(r.capacity || 0))}</span></div>
+
+&nbsp;         <div>Faturado: <span class="font-medium text-slate-900">${formatNumber(Number(r.billed || 0))}</span></div>
+
+&nbsp;         <div>Perda: <span class="font-medium text-rose-600">${formatNumber(lossVal)}</span></div>
+
+&nbsp;       `;
+
+&nbsp;       const ttRect = tooltipEl.getBoundingClientRect();
+
+&nbsp;       const ttWidth = ttRect.width || 140;
+
+&nbsp;       const ttHeight = ttRect.height || 60;
+
+&nbsp;       let left = rect.left + nearest.x - ttWidth / 2;
+
+&nbsp;       let top = rect.top + paddingTop + 10;
+
+&nbsp;       tooltipEl.style.left = left + "px";
+
+&nbsp;       tooltipEl.style.top = top + "px";
+
+&nbsp;       tooltipEl.classList.remove('hidden');
+
+&nbsp;     };
+
+&nbsp;     canvas.onmouseleave = () => {
+
+&nbsp;       tooltipEl.classList.add('hidden');
+
+&nbsp;     };
+
+&nbsp;   }
+
+
+
+&nbsp;   function createBarChart() {
+
+&nbsp;     const canvas = document.getElementById('bar-chart');
+
+&nbsp;     const ctx = canvas.getContext('2d');
+
+&nbsp;     const dpr = window.devicePixelRatio || 1;
+
+&nbsp;     const width = canvas.clientWidth;
+
+&nbsp;     const height = canvas.clientHeight;
+
+&nbsp;     canvas.width = width \* dpr;
+
+&nbsp;     canvas.height = height \* dpr;
+
+&nbsp;     ctx.scale(dpr, dpr);
+
+
+
+&nbsp;     const filtered = getFilteredData();
+
+&nbsp;     const labels = filtered.map(r => r.hourLabel);
+
+
+
+&nbsp;     const stacks = filtered.map(r => {
+
+&nbsp;       const totalCap = Number(r.capacity || 0);
+
+&nbsp;       const loss = Number(r.loss || 0);
+
+&nbsp;       const billed = Number(r.billed || 0);
+
+&nbsp;       let transporte = 0;
+
+&nbsp;       let cd = 0;
+
+&nbsp;       let semPerda = 0;
+
+
+
+&nbsp;       if (r.lossType === "Sem perda") {
+
+&nbsp;         semPerda = totalCap;
+
+&nbsp;       } else if (r.lossType === "Transporte") {
+
+&nbsp;         transporte = Math.min(loss, totalCap);
+
+&nbsp;         semPerda = Math.max(totalCap - transporte, 0);
+
+&nbsp;       } else if (r.lossType === "CD") {
+
+&nbsp;         cd = Math.min(loss, totalCap);
+
+&nbsp;         semPerda = Math.max(totalCap - cd, 0);
+
+&nbsp;       } else {
+
+&nbsp;         semPerda = totalCap;
+
+&nbsp;       }
+
+&nbsp;       return { transporte, cd, semPerda, raw: r };
+
+&nbsp;     });
+
+
+
+&nbsp;     const maxStack = Math.max(1, ...stacks.map(s => s.transporte + s.cd + s.semPerda));
+
+&nbsp;     const paddingLeft = 28;
+
+&nbsp;     const paddingRight = 10;
+
+&nbsp;     const paddingTop = 18;
+
+&nbsp;     const paddingBottom = 32;
+
+&nbsp;     const plotWidth = width - paddingLeft - paddingRight;
+
+&nbsp;     const plotHeight = height - paddingTop - paddingBottom;
+
+
+
+&nbsp;     ctx.clearRect(0, 0, width, height);
+
+&nbsp;     ctx.fillStyle = "#ffffff";
+
+&nbsp;     ctx.fillRect(0, 0, width, height);
+
+
+
+&nbsp;     ctx.strokeStyle = "#e5e7eb";
+
+&nbsp;     ctx.lineWidth = 1;
+
+&nbsp;     ctx.beginPath();
+
+&nbsp;     ctx.moveTo(paddingLeft, paddingTop);
+
+&nbsp;     ctx.lineTo(paddingLeft, height - paddingBottom);
+
+&nbsp;     ctx.lineTo(width - paddingRight, height - paddingBottom);
+
+&nbsp;     ctx.stroke();
+
+
+
+&nbsp;     ctx.fillStyle = "#6b7280";
+
+&nbsp;     ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+&nbsp;     const steps = 4;
+
+&nbsp;     for (let i = 0; i <= steps; i++) {
+
+&nbsp;       const value = (maxStack / steps) \* i;
+
+&nbsp;       const y = (height - paddingBottom) - (plotHeight \* (value / maxStack));
+
+&nbsp;       ctx.strokeStyle = "#f3f4f6";
+
+&nbsp;       ctx.beginPath();
+
+&nbsp;       ctx.moveTo(paddingLeft, y);
+
+&nbsp;       ctx.lineTo(width - paddingRight, y);
+
+&nbsp;       ctx.stroke();
+
+
+
+&nbsp;       ctx.fillStyle = "#9ca3af";
+
+&nbsp;       ctx.textAlign = "right";
+
+&nbsp;       ctx.textBaseline = "middle";
+
+&nbsp;       ctx.fillText(formatNumber(Math.round(value)), paddingLeft - 4, y);
+
+&nbsp;     }
+
+
+
+&nbsp;     const count = labels.length;
+
+&nbsp;     const barAreaWidth = plotWidth / Math.max(count, 1);
+
+&nbsp;     const barWidth = Math.min(18, barAreaWidth \* 0.55);
+
+&nbsp;     const barHitBoxes = \[];
+
+
+
+&nbsp;     ctx.textAlign = "center";
+
+&nbsp;     ctx.textBaseline = "top";
+
+&nbsp;     ctx.fillStyle = "#9ca3af";
+
+
+
+&nbsp;     for (let i = 0; i < count; i++) {
+
+&nbsp;       const centerX = paddingLeft + (barAreaWidth \* (i + 0.5));
+
+&nbsp;       const x0 = centerX - barWidth / 2;
+
+&nbsp;       const stack = stacks\[i];
+
+&nbsp;       const totalHeight = plotHeight \* ((stack.transporte + stack.cd + stack.semPerda) / maxStack);
+
+&nbsp;       let currentY = height - paddingBottom;
+
+
+
+&nbsp;       if (stack.transporte > 0) {
+
+&nbsp;         const h = plotHeight \* (stack.transporte / maxStack);
+
+&nbsp;         ctx.fillStyle = "#9ca3af";
+
+&nbsp;         ctx.fillRect(x0, currentY - h, barWidth, h);
+
+&nbsp;         currentY -= h;
+
+&nbsp;       }
+
+&nbsp;       if (stack.cd > 0) {
+
+&nbsp;         const h = plotHeight \* (stack.cd / maxStack);
+
+&nbsp;         ctx.fillStyle = "#7c3aed";
+
+&nbsp;         ctx.fillRect(x0, currentY - h, barWidth, h);
+
+&nbsp;         currentY -= h;
+
+&nbsp;       }
+
+&nbsp;       if (stack.semPerda > 0) {
+
+&nbsp;         const h = plotHeight \* (stack.semPerda / maxStack);
+
+&nbsp;         ctx.fillStyle = "#22c55e";
+
+&nbsp;         ctx.fillRect(x0, currentY - h, barWidth, h);
+
+&nbsp;         currentY -= h;
+
+&nbsp;       }
+
+
+
+&nbsp;       if (count <= 12 || i % Math.ceil(count / 12) === 0) {
+
+&nbsp;         ctx.fillStyle = "#9ca3af";
+
+&nbsp;         ctx.fillText(labels\[i], centerX, height - paddingBottom + 6);
+
+&nbsp;       }
+
+
+
+&nbsp;       barHitBoxes.push({
+
+&nbsp;         x: x0,
+
+&nbsp;         y: (height - paddingBottom) - totalHeight,
+
+&nbsp;         w: barWidth,
+
+&nbsp;         h: totalHeight,
+
+&nbsp;         stack,
+
+&nbsp;         label: labels\[i]
+
+&nbsp;       });
+
+&nbsp;     }
+
+
+
+&nbsp;     const tooltipEl = document.getElementById('bar-tooltip');
+
+&nbsp;     canvas.onmousemove = (e) => {
+
+&nbsp;       const rect = canvas.getBoundingClientRect();
+
+&nbsp;       const x = (e.clientX - rect.left);
+
+&nbsp;       const y = (e.clientY - rect.top);
+
+
+
+&nbsp;       let target = null;
+
+&nbsp;       for (const box of barHitBoxes) {
+
+&nbsp;         if (x >= box.x \&\& x <= box.x + box.w \&\& y >= box.y \&\& y <= box.y + box.h) {
+
+&nbsp;           target = box;
+
+&nbsp;           break;
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;       if (!target) {
+
+&nbsp;         tooltipEl.classList.add('hidden');
+
+&nbsp;         return;
+
+&nbsp;       }
+
+&nbsp;       const s = target.stack;
+
+&nbsp;       tooltipEl.innerHTML = `
+
+&nbsp;         <div class="font-semibold text-\[11px] mb-1">${target.label}</div>
+
+&nbsp;         <div>Transporte: <span class="font-medium text-slate-900">${formatNumber(s.transporte)}</span></div>
+
+&nbsp;         <div>CD: <span class="font-medium text-slate-900">${formatNumber(s.cd)}</span></div>
+
+&nbsp;         <div>Sem perda: <span class="font-medium text-slate-900">${formatNumber(s.semPerda)}</span></div>
+
+&nbsp;       `;
+
+&nbsp;       const ttRect = tooltipEl.getBoundingClientRect();
+
+&nbsp;       const ttWidth = ttRect.width || 160;
+
+&nbsp;       const ttHeight = ttRect.height || 70;
+
+&nbsp;       let left = rect.left + (target.x + target.w / 2) - ttWidth / 2;
+
+&nbsp;       let top = rect.top + target.y - ttHeight - 8;
+
+&nbsp;       if (top < rect.top + 4) top = rect.top + 4;
+
+&nbsp;       tooltipEl.style.left = left + "px";
+
+&nbsp;       tooltipEl.style.top = top + "px";
+
+&nbsp;       tooltipEl.classList.remove('hidden');
+
+&nbsp;     };
+
+&nbsp;     canvas.onmouseleave = () => {
+
+&nbsp;       tooltipEl.classList.add('hidden');
+
+&nbsp;     };
+
+&nbsp;   }
+
+
+
+&nbsp;   function renderEditTable() {
+
+&nbsp;     const tbody = document.getElementById('edit-table-body');
+
+&nbsp;     tbody.innerHTML = "";
+
+&nbsp;     workingData.forEach((row, idx) => {
+
+&nbsp;       const tr = document.createElement('tr');
+
+&nbsp;       tr.innerHTML = `
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-slate-700">${row.hourLabel}</td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right">
+
+&nbsp;           <label class="sr-only" for="cap-${idx}">Capacidade ${row.hourLabel}</label>
+
+&nbsp;           <input id="cap-${idx}" data-idx="${idx}" type="number" min="0" class="focus-outline w-24 text-right border border-slate-200 rounded-md px-1 py-0.5 text-\[11px] text-slate-700 bg-white" value="${row.capacity}">
+
+&nbsp;         </td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right">
+
+&nbsp;           <label class="sr-only" for="bill-${idx}">Faturado ${row.hourLabel}</label>
+
+&nbsp;           <input id="bill-${idx}" data-idx="${idx}" type="number" min="0" class="focus-outline w-24 text-right border border-slate-200 rounded-md px-1 py-0.5 text-\[11px] text-slate-700 bg-white" value="${row.billed}">
+
+&nbsp;         </td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px] text-right">
+
+&nbsp;           <label class="sr-only" for="loss-${idx}">Perda ${row.hourLabel}</label>
+
+&nbsp;           <input id="loss-${idx}" data-idx="${idx}" type="number" min="0" class="focus-outline w-24 text-right border border-slate-200 rounded-md px-1 py-0.5 text-\[11px] text-slate-700 bg-white" value="${row.loss}">
+
+&nbsp;         </td>
+
+&nbsp;         <td class="px-2 py-1.5 whitespace-nowrap text-\[11px]">
+
+&nbsp;           <label class="sr-only" for="type-${idx}">Tipo de perda ${row.hourLabel}</label>
+
+&nbsp;           <select id="type-${idx}" data-idx="${idx}" class="focus-outline w-28 border border-slate-200 rounded-md px-1 py-0.5 text-\[11px] text-slate-700 bg-white">
+
+&nbsp;             <option value="Transporte" ${row.lossType === "Transporte" ? "selected" : ""}>Transporte</option>
+
+&nbsp;             <option value="CD" ${row.lossType === "CD" ? "selected" : ""}>CD</option>
+
+&nbsp;             <option value="Sem perda" ${row.lossType === "Sem perda" ? "selected" : ""}>Sem perda</option>
+
+&nbsp;           </select>
+
+&nbsp;         </td>
+
+&nbsp;       `;
+
+&nbsp;       tbody.appendChild(tr);
+
+&nbsp;     });
+
+&nbsp;   }
+
+
+
+&nbsp;   function openModal() {
+
+&nbsp;     renderEditTable();
+
+&nbsp;     document.getElementById('edit-modal-backdrop').classList.remove('hidden');
+
+&nbsp;     document.getElementById('modal-status').textContent = "";
+
+&nbsp;   }
+
+
+
+&nbsp;   function closeModal() {
+
+&nbsp;     document.getElementById('edit-modal-backdrop').classList.add('hidden');
+
+&nbsp;   }
+
+
+
+&nbsp;   function calculateDistribution() {
+
+&nbsp;     const distribution = \[];
+
+&nbsp;     let carryOver = 0;
+
+&nbsp;     
+
+&nbsp;     for (let i = 0; i < workingData.length; i++) {
+
+&nbsp;       const row = workingData\[i];
+
+&nbsp;       const capacity = Number(row.capacity || 0);
+
+&nbsp;       const ownBilled = Number(row.billed || 0);
+
+&nbsp;       
+
+&nbsp;       const receivedBilled = ownBilled + carryOver;
+
+&nbsp;       
+
+&nbsp;       const allocated = Math.min(receivedBilled, capacity);
+
+&nbsp;       const delta = Math.max(0, receivedBilled - allocated);
+
+&nbsp;       
+
+&nbsp;       distribution.push({
+
+&nbsp;         hour: row.hourLabel,
+
+&nbsp;         window: row.window,
+
+&nbsp;         capacity: capacity,
+
+&nbsp;         ownBilled: ownBilled,
+
+&nbsp;         receivedBilled: receivedBilled,
+
+&nbsp;         allocated: allocated,
+
+&nbsp;         delta: delta
+
+&nbsp;       });
+
+&nbsp;       
+
+&nbsp;       carryOver = delta;
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     const totalOriginalBilled = workingData.reduce((sum, r) => sum + Number(r.billed || 0), 0);
+
+&nbsp;     const totalAllocated = distribution.reduce((sum, d) => sum + d.allocated, 0);
+
+&nbsp;     const fullyAllocated = carryOver === 0;
+
+&nbsp;     
+
+&nbsp;     return {
+
+&nbsp;       distribution,
+
+&nbsp;       totalOriginalBilled,
+
+&nbsp;       totalAllocated,
+
+&nbsp;       finalCarryOver: carryOver,
+
+&nbsp;       fullyAllocated
+
+&nbsp;     };
+
+&nbsp;   }
+
+
+
+&nbsp;   function renderDistributionTable(result) {
+
+&nbsp;     const content = document.getElementById('distribution-content');
+
+&nbsp;     
+
+&nbsp;     let html = `
+
+&nbsp;       <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+
+&nbsp;         <p class="text-sm font-semibold text-blue-900 mb-1">📋 Resumo da Distribuição</p>
+
+&nbsp;         <p class="text-xs text-blue-800">Total faturado original: <strong>${formatNumber(result.totalOriginalBilled)}</strong></p>
+
+&nbsp;         <p class="text-xs text-blue-800">Total alocado: <strong>${formatNumber(result.totalAllocated)}</strong></p>
+
+&nbsp;         ${result.finalCarryOver > 0 ? `<p class="text-xs text-rose-700 font-medium mt-1"⚠️ Excedente final não alocado: <strong>${formatNumber(result.finalCarryOver)}</strong></p>` : ''}
+
+&nbsp;         <p class="text-xs ${result.fullyAllocated ? 'text-emerald-700' : 'text-rose-700'} font-medium mt-1">
+
+&nbsp;           ${result.fullyAllocated ? '✅ Todo o faturado foi alocado com sucesso!' : '⚠️ Capacidade insuficiente para alocar todo o faturado'}
+
+&nbsp;         </p>
+
+&nbsp;       </div>
+
+&nbsp;       
+
+&nbsp;       <div class="overflow-x-auto">
+
+&nbsp;         <table class="min-w-full text-xs border-collapse">
+
+&nbsp;           <thead class="bg-slate-100">
+
+&nbsp;             <tr>
+
+&nbsp;               <th class="px-3 py-2 text-left font-semibold text-slate-700 border border-slate-200">Horário</th>
+
+&nbsp;               <th class="px-3 py-2 text-left font-semibold text-slate-700 border border-slate-200">Janela</th>
+
+&nbsp;               <th class="px-3 py-2 text-right font-semibold text-slate-700 border border-slate-200">Capacidade</th>
+
+&nbsp;               <th class="px-3 py-2 text-right font-semibold text-slate-700 border border-slate-200">Faturado Recebido</th>
+
+&nbsp;               <th class="px-3 py-2 text-right font-semibold text-slate-700 border border-slate-200">Faturado Alocado</th>
+
+&nbsp;               <th class="px-3 py-2 text-right font-semibold text-slate-700 border border-slate-200">Delta (p/ frente)</th>
+
+&nbsp;             </tr>
+
+&nbsp;           </thead>
+
+&nbsp;           <tbody>
+
+&nbsp;     `;
+
+&nbsp;     
+
+&nbsp;     result.distribution.forEach((row, idx) => {
+
+&nbsp;       const isFullyUsed = row.allocated === row.capacity \&\& row.capacity > 0;
+
+&nbsp;       const hasCarryOver = row.delta > 0;
+
+&nbsp;       const receivedCarryOver = row.receivedBilled > row.ownBilled;
+
+&nbsp;       
+
+&nbsp;       let rowClass = '';
+
+&nbsp;       if (isFullyUsed) {
+
+&nbsp;         rowClass = 'bg-emerald-50';
+
+&nbsp;       } else if (row.capacity === 0) {
+
+&nbsp;         rowClass = 'bg-slate-50';
+
+&nbsp;       } else if (receivedCarryOver) {
+
+&nbsp;         rowClass = 'bg-amber-50';
+
+&nbsp;       }
+
+&nbsp;       
+
+&nbsp;       html += `
+
+&nbsp;         <tr class="${rowClass}">
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 font-medium text-slate-800">${row.hour}</td>
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 text-slate-600">${row.window}</td>
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 text-right ${row.capacity === 0 ? 'text-slate-400' : 'text-slate-700'}">${formatNumber(row.capacity)}</td>
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 text-right ${receivedCarryOver ? 'text-amber-700 font-semibold' : 'text-slate-700'}">
+
+&nbsp;             ${formatNumber(row.receivedBilled)}
+
+&nbsp;             ${receivedCarryOver ? '<span class="text-\[10px] text-amber-600 ml-1">↓</span>' : ''}
+
+&nbsp;           </td>
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 text-right font-semibold ${row.allocated > 0 ? 'text-emerald-700' : 'text-slate-400'}">${formatNumber(row.allocated)}</td>
+
+&nbsp;           <td class="px-3 py-2 border border-slate-200 text-right ${hasCarryOver ? 'text-rose-600 font-semibold' : 'text-slate-400'}">
+
+&nbsp;             ${formatNumber(row.delta)}
+
+&nbsp;             ${hasCarryOver ? '<span class="text-\[10px] text-rose-600 ml-1">→</span>' : ''}
+
+&nbsp;           </td>
+
+&nbsp;         </tr>
+
+&nbsp;       `;
+
+&nbsp;     });
+
+&nbsp;     
+
+&nbsp;     html += `
+
+&nbsp;           </tbody>
+
+&nbsp;         </table>
+
+&nbsp;       </div>
+
+&nbsp;       
+
+&nbsp;       <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+
+&nbsp;         <p class="text-xs text-slate-600 mb-2"><strong>Legenda:</strong></p>
+
+&nbsp;         <div class="flex flex-col gap-1 text-xs text-slate-600">
+
+&nbsp;           <div class="flex items-center gap-2">
+
+&nbsp;             <span class="w-4 h-4 bg-emerald-50 border border-emerald-200 rounded"></span>
+
+&nbsp;             <span>Horário com capacidade totalmente utilizada</span>
+
+&nbsp;           </div>
+
+&nbsp;           <div class="flex items-center gap-2">
+
+&nbsp;             <span class="w-4 h-4 bg-amber-50 border border-amber-200 rounded"></span>
+
+&nbsp;             <span>Horário que recebeu excedente da hora anterior (↓)</span>
+
+&nbsp;           </div>
+
+&nbsp;           <div class="flex items-center gap-2">
+
+&nbsp;             <span class="w-4 h-4 bg-slate-50 border border-slate-200 rounded"></span>
+
+&nbsp;             <span>Horário sem capacidade</span>
+
+&nbsp;           </div>
+
+&nbsp;           <div class="flex items-center gap-2">
+
+&nbsp;             <span class="text-rose-600 font-bold">→</span>
+
+&nbsp;             <span>Indica que há excedente sendo transferido para o próximo horário</span>
+
+&nbsp;           </div>
+
+&nbsp;         </div>
+
+&nbsp;       </div>
+
+&nbsp;     `;
+
+&nbsp;     
+
+&nbsp;     content.innerHTML = html;
+
+&nbsp;   }
+
+
+
+&nbsp;   function openDistributionModal() {
+
+&nbsp;     distributionResult = calculateDistribution();
+
+&nbsp;     renderDistributionTable(distributionResult);
+
+&nbsp;     document.getElementById('distribution-modal-backdrop').classList.remove('hidden');
+
+&nbsp;   }
+
+
+
+&nbsp;   function closeDistributionModal() {
+
+&nbsp;     document.getElementById('distribution-modal-backdrop').classList.add('hidden');
+
+&nbsp;     distributionResult = null;
+
+&nbsp;   }
+
+
+
+&nbsp;   async function applyDistribution() {
+
+&nbsp;     if (!distributionResult) return;
+
+&nbsp;     
+
+&nbsp;     const applyBtn = document.getElementById('apply-distribution-btn');
+
+&nbsp;     applyBtn.disabled = true;
+
+&nbsp;     applyBtn.textContent = 'Aplicando...';
+
+&nbsp;     
+
+&nbsp;     distributionResult.distribution.forEach((distRow, idx) => {
+
+&nbsp;       if (idx < workingData.length) {
+
+&nbsp;         workingData\[idx].billed = distRow.allocated;
+
+&nbsp;       }
+
+&nbsp;     });
+
+&nbsp;     
+
+&nbsp;     if (dataSdkInitialized \&\& window.dataSdk) {
+
+&nbsp;       for (const row of workingData) {
+
+&nbsp;         if (row.\_\_backendId) {
+
+&nbsp;           const dataRecord = {
+
+&nbsp;             hour\_label: row.hourLabel,
+
+&nbsp;             capacity: row.capacity,
+
+&nbsp;             billed: row.billed,
+
+&nbsp;             loss: row.loss,
+
+&nbsp;             loss\_type: row.lossType,
+
+&nbsp;             \_\_backendId: row.\_\_backendId
+
+&nbsp;           };
+
+
+
+&nbsp;           const result = await window.dataSdk.update(dataRecord);
+
+&nbsp;           if (result.isError) {
+
+&nbsp;             console.error("Erro ao atualizar:", result.error);
+
+&nbsp;             applyBtn.textContent = 'Erro ao salvar!';
+
+&nbsp;             applyBtn.disabled = false;
+
+&nbsp;             return;
+
+&nbsp;           }
+
+&nbsp;         } else {
+
+&nbsp;           const dataRecord = {
+
+&nbsp;             hour\_label: row.hourLabel,
+
+&nbsp;             capacity: row.capacity,
+
+&nbsp;             billed: row.billed,
+
+&nbsp;             loss: row.loss,
+
+&nbsp;             loss\_type: row.lossType
+
+&nbsp;           };
+
+
+
+&nbsp;           const result = await window.dataSdk.create(dataRecord);
+
+&nbsp;           if (result.isError) {
+
+&nbsp;             console.error("Erro ao criar:", result.error);
+
+&nbsp;             applyBtn.textContent = 'Erro ao salvar!';
+
+&nbsp;             applyBtn.disabled = false;
+
+&nbsp;             return;
+
+&nbsp;           }
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     updateLastUpdateTime();
+
+&nbsp;     updateKpis();
+
+&nbsp;     renderCurrentHourCard();
+
+&nbsp;     renderTable();
+
+&nbsp;     createLineChart();
+
+&nbsp;     createBarChart();
+
+&nbsp;     
+
+&nbsp;     applyBtn.textContent = '✅ Aplicado!';
+
+&nbsp;     
+
+&nbsp;     setTimeout(() => {
+
+&nbsp;       closeDistributionModal();
+
+&nbsp;       applyBtn.textContent = 'Aplicar Distribuição';
+
+&nbsp;       applyBtn.disabled = false;
+
+&nbsp;     }, 800);
+
+&nbsp;   }
+
+
+
+&nbsp;   async function saveModalChanges() {
+
+&nbsp;     const statusEl = document.getElementById('modal-status');
+
+&nbsp;     const saveBtn = document.getElementById('save-modal-btn');
+
+&nbsp;     
+
+&nbsp;     statusEl.textContent = "Salvando...";
+
+&nbsp;     saveBtn.disabled = true;
+
+
+
+&nbsp;     // Captura os valores dos inputs ANTES de qualquer operação
+
+&nbsp;     const updatedValues = \[];
+
+&nbsp;     for (let idx = 0; idx < workingData.length; idx++) {
+
+&nbsp;       const capInput = document.getElementById('cap-' + idx);
+
+&nbsp;       const billInput = document.getElementById('bill-' + idx);
+
+&nbsp;       const lossInput = document.getElementById('loss-' + idx);
+
+&nbsp;       const typeSelect = document.getElementById('type-' + idx);
+
+&nbsp;       
+
+&nbsp;       updatedValues.push({
+
+&nbsp;         capacity: Number(capInput.value || 0),
+
+&nbsp;         billed: Number(billInput.value || 0),
+
+&nbsp;         loss: Number(lossInput.value || 0),
+
+&nbsp;         lossType: typeSelect.value || "Sem perda"
+
+&nbsp;       });
+
+&nbsp;     }
+
+
+
+&nbsp;     // Salva no Data SDK se disponível
+
+&nbsp;     if (dataSdkInitialized \&\& window.dataSdk) {
+
+&nbsp;       // Primeiro, deleta todos os registros existentes
+
+&nbsp;       const recordsToDelete = workingData.filter(row => row.\_\_backendId);
+
+&nbsp;       for (const row of recordsToDelete) {
+
+&nbsp;         const deleteRecord = {
+
+&nbsp;           hour\_label: row.hourLabel,
+
+&nbsp;           capacity: row.capacity,
+
+&nbsp;           billed: row.billed,
+
+&nbsp;           loss: row.loss,
+
+&nbsp;           loss\_type: row.lossType,
+
+&nbsp;           \_\_backendId: row.\_\_backendId
+
+&nbsp;         };
+
+&nbsp;         
+
+&nbsp;         const deleteResult = await window.dataSdk.delete(deleteRecord);
+
+&nbsp;         if (deleteResult.isError) {
+
+&nbsp;           console.error("Erro ao deletar:", deleteResult.error);
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;       
+
+&nbsp;       // Atualiza os dados locais com os valores capturados
+
+&nbsp;       for (let idx = 0; idx < workingData.length; idx++) {
+
+&nbsp;         const row = workingData\[idx];
+
+&nbsp;         delete row.\_\_backendId;
+
+&nbsp;         row.capacity = updatedValues\[idx].capacity;
+
+&nbsp;         row.billed = updatedValues\[idx].billed;
+
+&nbsp;         row.loss = updatedValues\[idx].loss;
+
+&nbsp;         row.lossType = updatedValues\[idx].lossType;
+
+&nbsp;       }
+
+&nbsp;       
+
+&nbsp;       // Agora cria novos registros com os dados atualizados
+
+&nbsp;       for (const row of workingData) {
+
+&nbsp;         const dataRecord = {
+
+&nbsp;           hour\_label: row.hourLabel,
+
+&nbsp;           capacity: row.capacity,
+
+&nbsp;           billed: row.billed,
+
+&nbsp;           loss: row.loss,
+
+&nbsp;           loss\_type: row.lossType
+
+&nbsp;         };
+
+
+
+&nbsp;         const result = await window.dataSdk.create(dataRecord);
+
+&nbsp;         if (result.isError) {
+
+&nbsp;           console.error("Erro ao criar:", result.error);
+
+&nbsp;           statusEl.textContent = "Erro ao salvar!";
+
+&nbsp;           saveBtn.disabled = false;
+
+&nbsp;           return;
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;     } else {
+
+&nbsp;       // Se não tiver SDK, apenas atualiza localmente
+
+&nbsp;       for (let idx = 0; idx < workingData.length; idx++) {
+
+&nbsp;         const row = workingData\[idx];
+
+&nbsp;         row.capacity = updatedValues\[idx].capacity;
+
+&nbsp;         row.billed = updatedValues\[idx].billed;
+
+&nbsp;         row.loss = updatedValues\[idx].loss;
+
+&nbsp;         row.lossType = updatedValues\[idx].lossType;
+
+&nbsp;       }
+
+&nbsp;     }
+
+
+
+&nbsp;     updateLastUpdateTime();
+
+&nbsp;     updateKpis();
+
+&nbsp;     renderCurrentHourCard();
+
+&nbsp;     renderTable();
+
+&nbsp;     createLineChart();
+
+&nbsp;     createBarChart();
+
+
+
+&nbsp;     statusEl.textContent = "✅ Alterações salvas!";
+
+&nbsp;     saveBtn.disabled = false;
+
+
+
+&nbsp;     setTimeout(() => {
+
+&nbsp;       closeModal();
+
+&nbsp;     }, 800);
+
+&nbsp;   }
+
+
+
+&nbsp;   function updateLastUpdateTime() {
+
+&nbsp;     const now = new Date();
+
+&nbsp;     const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+&nbsp;     const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+&nbsp;     document.getElementById('last-update-time').textContent = `${dateStr} às ${timeStr}`;
+
+&nbsp;   }
+
+
+
+&nbsp;   function initFilterEvents() {
+
+&nbsp;     const startSel = document.getElementById('start-hour');
+
+&nbsp;     const endSel = document.getElementById('end-hour');
+
+&nbsp;     const lossSel = document.getElementById('loss-type-filter');
+
+
+
+&nbsp;     startSel.addEventListener('change', (e) => {
+
+&nbsp;       const val = parseInt(e.target.value, 10);
+
+&nbsp;       filterState.startHourIndex = isNaN(val) ? 0 : val;
+
+&nbsp;       if (filterState.startHourIndex > filterState.endHourIndex) {
+
+&nbsp;         filterState.endHourIndex = filterState.startHourIndex;
+
+&nbsp;         endSel.value = String(filterState.endHourIndex);
+
+&nbsp;       }
+
+&nbsp;       updateKpis();
+
+&nbsp;       renderTable();
+
+&nbsp;       createLineChart();
+
+&nbsp;       createBarChart();
+
+&nbsp;     });
+
+
+
+&nbsp;     endSel.addEventListener('change', (e) => {
+
+&nbsp;       const val = parseInt(e.target.value, 10);
+
+&nbsp;       filterState.endHourIndex = isNaN(val) ? workingData.length - 1 : val;
+
+&nbsp;       if (filterState.endHourIndex < filterState.startHourIndex) {
+
+&nbsp;         filterState.startHourIndex = filterState.endHourIndex;
+
+&nbsp;         startSel.value = String(filterState.startHourIndex);
+
+&nbsp;       }
+
+&nbsp;       updateKpis();
+
+&nbsp;       renderTable();
+
+&nbsp;       createLineChart();
+
+&nbsp;       createBarChart();
+
+&nbsp;     });
+
+
+
+&nbsp;     lossSel.addEventListener('change', (e) => {
+
+&nbsp;       filterState.lossType = e.target.value;
+
+&nbsp;       updateKpis();
+
+&nbsp;       renderTable();
+
+&nbsp;       createLineChart();
+
+&nbsp;       createBarChart();
+
+&nbsp;     });
+
+
+
+&nbsp;     document.getElementById('distribute-btn').addEventListener('click', openDistributionModal);
+
+&nbsp;     document.getElementById('edit-data-btn').addEventListener('click', openModal);
+
+&nbsp;     document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+
+&nbsp;     document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+
+&nbsp;     document.getElementById('save-modal-btn').addEventListener('click', saveModalChanges);
+
+&nbsp;     document.getElementById('reset-data-btn').addEventListener('click', resetAllData);
+
+&nbsp;     document.getElementById('close-distribution-btn').addEventListener('click', closeDistributionModal);
+
+&nbsp;     document.getElementById('cancel-distribution-btn').addEventListener('click', closeDistributionModal);
+
+&nbsp;     document.getElementById('apply-distribution-btn').addEventListener('click', applyDistribution);
+
+&nbsp;   }
+
+
+
+&nbsp;   async function resetAllData() {
+
+&nbsp;     const resetBtn = document.getElementById('reset-data-btn');
+
+&nbsp;     const originalText = resetBtn.innerHTML;
+
+&nbsp;     
+
+&nbsp;     resetBtn.innerHTML = '⚠️ Confirmar?';
+
+&nbsp;     resetBtn.style.backgroundColor = '#fef2f2';
+
+&nbsp;     
+
+&nbsp;     const confirmReset = () => {
+
+&nbsp;       return new Promise((resolve) => {
+
+&nbsp;         const handleClick = () => {
+
+&nbsp;           resetBtn.removeEventListener('click', handleClick);
+
+&nbsp;           resolve(true);
+
+&nbsp;         };
+
+&nbsp;         
+
+&nbsp;         const handleCancel = () => {
+
+&nbsp;           resetBtn.removeEventListener('click', handleClick);
+
+&nbsp;           document.removeEventListener('click', handleOutsideClick);
+
+&nbsp;           resolve(false);
+
+&nbsp;         };
+
+&nbsp;         
+
+&nbsp;         const handleOutsideClick = (e) => {
+
+&nbsp;           if (e.target !== resetBtn) {
+
+&nbsp;             handleCancel();
+
+&nbsp;           }
+
+&nbsp;         };
+
+&nbsp;         
+
+&nbsp;         resetBtn.addEventListener('click', handleClick);
+
+&nbsp;         setTimeout(() => {
+
+&nbsp;           document.addEventListener('click', handleOutsideClick);
+
+&nbsp;         }, 100);
+
+&nbsp;         
+
+&nbsp;         setTimeout(() => {
+
+&nbsp;           handleCancel();
+
+&nbsp;         }, 3000);
+
+&nbsp;       });
+
+&nbsp;     };
+
+&nbsp;     
+
+&nbsp;     const confirmed = await confirmReset();
+
+&nbsp;     
+
+&nbsp;     if (!confirmed) {
+
+&nbsp;       resetBtn.innerHTML = originalText;
+
+&nbsp;       resetBtn.style.backgroundColor = '';
+
+&nbsp;       return;
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     resetBtn.innerHTML = '🔄 Resetando...';
+
+&nbsp;     resetBtn.disabled = true;
+
+&nbsp;     
+
+&nbsp;     workingData = baseRawData.map((row, idx) => ({
+
+&nbsp;       id: idx,
+
+&nbsp;       window: row.window,
+
+&nbsp;       hourLabel: row.hourLabel,
+
+&nbsp;       capacity: row.capacity,
+
+&nbsp;       billed: 0,
+
+&nbsp;       loss: 0,
+
+&nbsp;       lossType: "Sem perda"
+
+&nbsp;     }));
+
+&nbsp;     
+
+&nbsp;     if (dataSdkInitialized \&\& window.dataSdk) {
+
+&nbsp;       const recordsToDelete = workingData.filter(row => row.\_\_backendId);
+
+&nbsp;       
+
+&nbsp;       for (const row of recordsToDelete) {
+
+&nbsp;         const result = await window.dataSdk.delete({ 
+
+&nbsp;           hour\_label: row.hourLabel,
+
+&nbsp;           capacity: row.capacity,
+
+&nbsp;           billed: row.billed,
+
+&nbsp;           loss: row.loss,
+
+&nbsp;           loss\_type: row.lossType,
+
+&nbsp;           \_\_backendId: row.\_\_backendId 
+
+&nbsp;         });
+
+&nbsp;         
+
+&nbsp;         if (result.isError) {
+
+&nbsp;           console.error("Erro ao deletar:", result.error);
+
+&nbsp;         } else {
+
+&nbsp;           delete row.\_\_backendId;
+
+&nbsp;         }
+
+&nbsp;       }
+
+&nbsp;     }
+
+&nbsp;     
+
+&nbsp;     updateLastUpdateTime();
+
+&nbsp;     updateKpis();
+
+&nbsp;     renderCurrentHourCard();
+
+&nbsp;     renderTable();
+
+&nbsp;     createLineChart();
+
+&nbsp;     createBarChart();
+
+&nbsp;     
+
+&nbsp;     resetBtn.innerHTML = '✅ Resetado!';
+
+&nbsp;     setTimeout(() => {
+
+&nbsp;       resetBtn.innerHTML = originalText;
+
+&nbsp;       resetBtn.disabled = false;
+
+&nbsp;       resetBtn.style.backgroundColor = '';
+
+&nbsp;     }, 1500);
+
+&nbsp;   }
+
+
+
+&nbsp;   async function initDataSdk() {
+
+&nbsp;     if (!window.dataSdk) {
+
+&nbsp;       console.log("Data SDK não disponível");
+
+&nbsp;       return;
+
+&nbsp;     }
+
+
+
+&nbsp;     const dataHandler = {
+
+&nbsp;       onDataChanged(data) {
+
+&nbsp;         if (!data || data.length === 0) {
+
+&nbsp;           return;
+
+&nbsp;         }
+
+
+
+&nbsp;         data.forEach(savedRow => {
+
+&nbsp;           const matchingRow = workingData.find(r => r.hourLabel === savedRow.hour\_label);
+
+&nbsp;           if (matchingRow) {
+
+&nbsp;             matchingRow.capacity = Number(savedRow.capacity || 0);
+
+&nbsp;             matchingRow.billed = Number(savedRow.billed || 0);
+
+&nbsp;             matchingRow.loss = Number(savedRow.loss || 0);
+
+&nbsp;             matchingRow.lossType = savedRow.loss\_type || "Sem perda";
+
+&nbsp;             matchingRow.\_\_backendId = savedRow.\_\_backendId;
+
+&nbsp;           }
+
+&nbsp;         });
+
+
+
+&nbsp;         updateKpis();
+
+&nbsp;         renderCurrentHourCard();
+
+&nbsp;         renderTable();
+
+&nbsp;         createLineChart();
+
+&nbsp;         createBarChart();
+
+&nbsp;       }
+
+&nbsp;     };
+
+
+
+&nbsp;     const initResult = await window.dataSdk.init(dataHandler);
+
+&nbsp;     if (initResult.isOk) {
+
+&nbsp;       dataSdkInitialized = true;
+
+&nbsp;       console.log("Data SDK inicializado com sucesso");
+
+&nbsp;     } else {
+
+&nbsp;       console.error("Erro ao inicializar Data SDK:", initResult.error);
+
+&nbsp;     }
+
+&nbsp;   }
+
+
+
+&nbsp;   function applyConfigToUI(config) {
+
+&nbsp;     const cfg = config || defaultConfig;
+
+&nbsp;     const root = document.getElementById('app-root');
+
+&nbsp;     const mainTitle = document.getElementById('main-title');
+
+&nbsp;     const subtitleText = document.getElementById('subtitle-text');
+
+
+
+&nbsp;     root.style.backgroundColor = cfg.background\_color || defaultConfig.background\_color;
+
+
+
+&nbsp;     mainTitle.textContent = cfg.main\_title || defaultConfig.main\_title;
+
+&nbsp;     subtitleText.textContent = cfg.subtitle || defaultConfig.subtitle;
+
+&nbsp;   }
+
+
+
+&nbsp;   (function initElementSdk() {
+
+&nbsp;     if (!window.elementSdk) {
+
+&nbsp;       applyConfigToUI(defaultConfig);
+
+&nbsp;       return;
+
+&nbsp;     }
+
+
+
+&nbsp;     window.elementSdk.init({
+
+&nbsp;       defaultConfig,
+
+&nbsp;       onConfigChange: async (config) => {
+
+&nbsp;         applyConfigToUI(config);
+
+&nbsp;       },
+
+&nbsp;       mapToCapabilities: (config) => {
+
+&nbsp;         const cfg = config || defaultConfig;
+
+&nbsp;         return {
+
+&nbsp;           recolorables: \[
+
+&nbsp;             {
+
+&nbsp;               get: () => cfg.background\_color || defaultConfig.background\_color,
+
+&nbsp;               set: (value) => {
+
+&nbsp;                 cfg.background\_color = value;
+
+&nbsp;                 window.elementSdk.setConfig({ background\_color: value });
+
+&nbsp;               }
+
+&nbsp;             },
+
+&nbsp;             {
+
+&nbsp;               get: () => cfg.surface\_color || defaultConfig.surface\_color,
+
+&nbsp;               set: (value) => {
+
+&nbsp;                 cfg.surface\_color = value;
+
+&nbsp;                 window.elementSdk.setConfig({ surface\_color: value });
+
+&nbsp;               }
+
+&nbsp;             },
+
+&nbsp;             {
+
+&nbsp;               get: () => cfg.text\_color || defaultConfig.text\_color,
+
+&nbsp;               set: (value) => {
+
+&nbsp;                 cfg.text\_color = value;
+
+&nbsp;                 window.elementSdk.setConfig({ text\_color: value });
+
+&nbsp;               }
+
+&nbsp;             },
+
+&nbsp;             {
+
+&nbsp;               get: () => cfg.primary\_action\_color || defaultConfig.primary\_action\_color,
+
+&nbsp;               set: (value) => {
+
+&nbsp;                 cfg.primary\_action\_color = value;
+
+&nbsp;                 window.elementSdk.setConfig({ primary\_action\_color: value });
+
+&nbsp;               }
+
+&nbsp;             },
+
+&nbsp;             {
+
+&nbsp;               get: () => cfg.secondary\_action\_color || defaultConfig.secondary\_action\_color,
+
+&nbsp;               set: (value) => {
+
+&nbsp;                 cfg.secondary\_action\_color = value;
+
+&nbsp;                 window.elementSdk.setConfig({ secondary\_action\_color: value });
+
+&nbsp;               }
+
+&nbsp;             }
+
+&nbsp;           ],
+
+&nbsp;           borderables: \[],
+
+&nbsp;           fontEditable: {
+
+&nbsp;             get: () => cfg.font\_family || defaultConfig.font\_family,
+
+&nbsp;             set: (value) => {
+
+&nbsp;               cfg.font\_family = value;
+
+&nbsp;               window.elementSdk.setConfig({ font\_family: value });
+
+&nbsp;             }
+
+&nbsp;           },
+
+&nbsp;           fontSizeable: {
+
+&nbsp;             get: () => cfg.font\_size || defaultConfig.font\_size,
+
+&nbsp;             set: (value) => {
+
+&nbsp;               cfg.font\_size = value;
+
+&nbsp;               window.elementSdk.setConfig({ font\_size: value });
+
+&nbsp;             }
+
+&nbsp;           }
+
+&nbsp;         };
+
+&nbsp;       },
+
+&nbsp;       mapToEditPanelValues: (config) => {
+
+&nbsp;         const map = new Map();
+
+&nbsp;         const cfg = config || defaultConfig;
+
+&nbsp;         map.set("main\_title", cfg.main\_title || defaultConfig.main\_title);
+
+&nbsp;         map.set("subtitle", cfg.subtitle || defaultConfig.subtitle);
+
+&nbsp;         return map;
+
+&nbsp;       }
+
+&nbsp;     });
+
+&nbsp;   })();
+
+
+
+&nbsp;   async function initApp() {
+
+&nbsp;     initHourSelects();
+
+&nbsp;     initFilterEvents();
+
+&nbsp;     
+
+&nbsp;     await initDataSdk();
+
+&nbsp;     
+
+&nbsp;     updateKpis();
+
+&nbsp;     renderCurrentHourCard();
+
+&nbsp;     renderTable();
+
+&nbsp;     createLineChart();
+
+&nbsp;     createBarChart();
+
+&nbsp;     applyConfigToUI(window.elementSdk ? window.elementSdk.config || defaultConfig : defaultConfig);
+
+
+
+&nbsp;     setInterval(() => {
+
+&nbsp;       updateCurrentTimeDisplay();
+
+&nbsp;       renderCurrentHourCard();
+
+&nbsp;     }, 1000);
+
+
+
+&nbsp;     let resizeTimeout;
+
+&nbsp;     window.addEventListener('resize', () => {
+
+&nbsp;       clearTimeout(resizeTimeout);
+
+&nbsp;       resizeTimeout = setTimeout(() => {
+
+&nbsp;         createLineChart();
+
+&nbsp;         createBarChart();
+
+&nbsp;       }, 150);
+
+&nbsp;     });
+
+&nbsp;   }
+
+
+
+&nbsp;   if (document.readyState === "loading") {
+
+&nbsp;     document.addEventListener("DOMContentLoaded", initApp);
+
+&nbsp;   } else {
+
+&nbsp;     initApp();
+
+&nbsp;   }
+
+&nbsp; </script>
+
+&nbsp;<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.\_\_CF$cv$params={r:'9a8a7698515ff1f2',t:'MTc2NDg0MjQ5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')\[0].appendChild(a);";b.getElementsByTagName('head')\[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState\&\&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+</html>
+
